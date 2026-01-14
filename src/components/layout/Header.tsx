@@ -34,7 +34,7 @@ export function Header({ alertCount = 0 }: HeaderProps) {
     <motion.header
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="sticky top-0 z-40 border-b border-white/10 bg-white/5 backdrop-blur-md"
+      className="sticky top-0 z-40 border-b border-white/10 bg-gradient-to-r from-slate-900/95 via-purple-900/50 to-slate-900/95 backdrop-blur-md"
     >
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <div className="flex items-center gap-3">
@@ -48,12 +48,22 @@ export function Header({ alertCount = 0 }: HeaderProps) {
         </div>
 
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" className="text-gray-300 hover:text-white hover:bg-white/10 relative">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="text-gray-300 hover:text-white hover:bg-white/10 relative transition-all duration-200"
+            onClick={() => alertCount > 0 && console.log(`${alertCount} alerts`)}
+            title={alertCount > 0 ? `You have ${alertCount} alerts` : 'No new alerts'}
+          >
             <Bell className="h-5 w-5" />
             {alertCount > 0 && (
-              <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
+              <motion.span 
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-r from-red-500 to-orange-500 text-xs font-bold text-white shadow-lg shadow-red-500/50"
+              >
                 {alertCount}
-              </span>
+              </motion.span>
             )}
           </Button>
 

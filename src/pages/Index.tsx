@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Plus, Wallet, TrendingDown, AlertTriangle, Target, BadgeCheck } from 'lucide-react';
+import { Plus, Wallet, TrendingDown, AlertTriangle, Target, BadgeCheck, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Header } from '@/components/layout/Header';
 import { StatCard } from '@/components/dashboard/StatCard';
@@ -43,6 +43,8 @@ const Index = () => {
   const [botInput, setBotInput] = useState('');
   const [botMessages, setBotMessages] = useState<Array<{ role: 'ai' | 'user'; text: string }>>([]);
   const [lastAnalysis, setLastAnalysis] = useState<AnalysisResult | null>(null);
+  const [isFloatingHovered, setIsFloatingHovered] = useState(false);
+  const [dismissedAlertIds, setDismissedAlertIds] = useState<Set<string>>(new Set());
   const { user } = useAuth();
 
   const expensesKey = user?.email ? `expenses:${user.email.toLowerCase()}` : 'expenses:guest';
@@ -293,19 +295,27 @@ const Index = () => {
             variant="primary"
           />
           <div className="lg:col-span-4">
-            <Button
-              variant={applySavings ? "outline" : "default"}
-              onClick={() => {
-                setApplySavings((v) => !v);
-                if (!applySavings) {
-                  toast.success('Potential savings applied', { description: `New total: ₹${Math.max(0, totalSpent - potentialSavings).toFixed(0)}` });
-                } else {
-                  toast('Savings removed', { description: `Total restored: ₹${totalSpent.toFixed(0)}` });
-                }
-              }}
+            <motion.div
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
             >
-              {applySavings ? 'Remove Applied Savings' : 'Apply Potential Savings'}
-            </Button>
+              <Button
+                onClick={() => {
+                  setApplySavings((v) => !v);
+                  if (!applySavings) {
+                    toast.success('Potential savings applied', { description: `New total: ₹${Math.max(0, totalSpent - potentialSavings).toFixed(0)}` });
+                  } else {
+                    toast('Savings removed', { description: `Total restored: ₹${totalSpent.toFixed(0)}` });
+                  }
+                }}
+                className={applySavings 
+                  ? 'w-full bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 text-white font-semibold rounded-xl h-11 shadow-lg shadow-orange-500/30'
+                  : 'w-full bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 text-white font-semibold rounded-xl h-11 shadow-lg shadow-emerald-500/30'
+                }
+              >
+                {applySavings ? 'Remove Applied Savings' : 'Apply Potential Savings'}
+              </Button>
+            </motion.div>
           </div>
         </motion.section>
 
@@ -318,11 +328,11 @@ const Index = () => {
             className="mb-8"
           >
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-xl font-bold font-display text-foreground">
+              <h2 className="text-xl font-bold font-display bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">
                 🚨 Bad Habit Alerts
               </h2>
-              <Button variant="ghost" size="sm" className="text-muted-foreground">
-                View All
+              <Button variant="ghost" size="sm" className="text-purple-400 hover:text-purple-300 hover:bg-purple-500/10 transition-colors">
+                View All →
               </Button>
             </div>
             <div className="space-y-4">
@@ -356,42 +366,24 @@ const Index = () => {
           transition={{ delay: 0.4 }}
         >
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-xl font-bold font-display text-foreground">
+            <h2 className="text-xl font-bold font-display bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">
               Recent Expenses
             </h2>
-            <Button variant="ghost" size="sm" className="text-muted-foreground">
-              See All
+            <Button variant="ghost" size="sm" className="text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10 transition-colors">
+              See All →
             </Button>
           </div>
           <ExpenseList expenses={expenses.slice(0, 6)} onDelete={handleDeleteExpense} />
         </motion.section>
       </main>
 
-      {/* Floating Actions (bottom-left) */}
+      {/* Floating Actions (bottom-right) */}
       <motion.div
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
         transition={{ delay: 0.5, type: 'spring' }}
-        className="fixed bottom-6 left-6 flex flex-col gap-3"
+        className="fixed bottom-6 right-6 flex flex-col gap-3 z-50"
       >
-        <Button
-          onClick={() => setIsModalOpen(true)}
-          className="rounded-full gradient-primary shadow-glow hover:shadow-xl transition-all px-5 h-12"
-        >
-          <Plus className="h-5 w-5 mr-2" />
-          Add Expense
-        </Button>
-        {/* STRICT MODE: Quick Add removed */}
-        <Button
-          onClick={() => {
-            setIsSavedOpen(true);
-          }}
-          className="rounded-full gradient-primary shadow-glow hover:shadow-xl transition-all px-5 h-12 text-primary-foreground"
-        >
-          <BadgeCheck className="h-5 w-5 mr-2" />
-          Saved
-        </Button>
-        {/* Single new UI element: AI Suggestions button */}
         <Button
           onClick={async () => {
             setIsBotOpen((v) => !v);
@@ -409,9 +401,26 @@ const Index = () => {
               }
             }
           }}
-          className="rounded-full gradient-primary shadow-glow hover:shadow-xl transition-all px-5 h-12 text-primary-foreground"
+          className="rounded-full bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 shadow-lg shadow-purple-500/50 hover:shadow-xl transition-all px-5 h-12 text-white font-semibold"
         >
+          <Sparkles className="h-5 w-5 mr-2" />
           AI Suggestions
+        </Button>
+        <Button
+          onClick={() => {
+            setIsSavedOpen(true);
+          }}
+          className="rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 shadow-lg shadow-emerald-500/50 hover:shadow-xl transition-all px-5 h-12 text-white font-semibold"
+        >
+          <BadgeCheck className="h-5 w-5 mr-2" />
+          Saved
+        </Button>
+        <Button
+          onClick={() => setIsModalOpen(true)}
+          className="rounded-full bg-gradient-to-r from-violet-500 to-pink-500 hover:from-violet-600 hover:to-pink-600 shadow-lg shadow-violet-500/50 hover:shadow-xl transition-all px-5 h-12 text-white font-semibold"
+        >
+          <Plus className="h-5 w-5 mr-2" />
+          Add Expense
         </Button>
       </motion.div>
 
@@ -424,24 +433,34 @@ const Index = () => {
 
       {/* Lightweight chat panel (overlay), not a new page/layout */}
       {isBotOpen && (
-        <div className="fixed bottom-24 left-6 z-40 w-[min(420px,90vw)] rounded-2xl border border-border bg-card shadow-xl">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-            <div className="text-sm font-semibold">AI Suggestions</div>
-            <Button variant="ghost" size="sm" onClick={() => setIsBotOpen(false)}>Close</Button>
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.95, y: 20 }}
+          className="fixed bottom-32 right-6 z-50 w-[min(420px,90vw)] rounded-2xl border border-white/20 bg-slate-900/95 backdrop-blur-xl shadow-2xl shadow-purple-500/20"
+        >
+          <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 bg-gradient-to-r from-purple-500/10 to-cyan-500/10">
+            <div className="text-sm font-semibold bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">✨ AI Suggestions</div>
+            <Button variant="ghost" size="sm" onClick={() => setIsBotOpen(false)} className="text-gray-400 hover:text-white">✕</Button>
           </div>
           <div className="max-h-72 overflow-auto p-4 space-y-3">
-            {botLoading && <div className="text-sm text-muted-foreground">Analyzing your expenses…</div>}
+            {botLoading && <div className="text-sm text-gray-400 italic">Analyzing your spending patterns…</div>}
             {(!botLoading && botMessages.length === 0) && (
-              <div className="text-sm text-muted-foreground">No messages yet. Ask for tips on a category or spending habit.</div>
+              <div className="text-sm text-gray-400 italic">Ask for tips on a category or spending habit.</div>
             )}
             {botMessages.map((m, i) => (
-              <div key={i} className={m.role === 'ai' ? 'text-sm text-foreground' : 'text-sm text-primary'}>
+              <motion.div 
+                key={i} 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className={m.role === 'ai' ? 'bg-cyan-500/10 border border-cyan-500/30 rounded-lg p-3 text-sm text-gray-200' : 'bg-purple-500/10 border border-purple-500/30 rounded-lg p-3 text-sm text-purple-300 ml-8'}
+              >
                 {m.text}
-              </div>
+              </motion.div>
             ))}
           </div>
           <form
-            className="flex gap-2 p-3 border-t border-border"
+            className="flex gap-2 p-3 border-t border-white/10 bg-white/5"
             onSubmit={async (e) => {
               e.preventDefault();
               const q = botInput.trim();
@@ -451,20 +470,22 @@ const Index = () => {
               try {
                 const { reply } = await requestGeminiChat(expenses, q);
                 setBotMessages((msgs) => [...msgs, { role: 'ai', text: reply }]);
-              } catch {
+                toast.success('AI suggestion received!');
+              } catch (error) {
                 setBotMessages((msgs) => [...msgs, { role: 'ai', text: 'I had trouble reaching the AI service. Try again shortly.' }]);
+                toast.error('Failed to get AI suggestion. Please try again.');
               }
             }}
           >
             <input
-              className="flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm"
-              placeholder="Ask for help: e.g., reduce food delivery"
+              className="flex-1 rounded-md border border-white/20 bg-white/5 text-white px-3 py-2 text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
+              placeholder="Ask for help: reduce food delivery"
               value={botInput}
               onChange={(e) => setBotInput(e.target.value)}
             />
-            <Button type="submit" className="text-primary-foreground">Send</Button>
+            <Button type="submit" className="bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 text-white font-semibold">Send</Button>
           </form>
-        </div>
+        </motion.div>
       )}
     </div>
   );
